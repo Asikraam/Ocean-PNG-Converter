@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ocean PNG Converter - Konverter WMF, EMF &amp; PDF ke PNG</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-window">
+      <!-- Baris 1: Pilih File / Folder Sumber & Tujuan -->
+      <section id="dropZone" class="panel io-panel" aria-label="Sumber dan Tujuan File">
+        <div class="panel-header">
+          <h1 class="panel-title">Ocean PNG Converter - Ubah WMF, EMF &amp; PDF Jadi PNG</h1>
+          <span id="engineStatusText" class="engine-status mono">Engine: memeriksa...</span>
+        </div>
+
+        <div class="io-grid">
+          <label class="io-label" for="inputPath">Sumber File</label>
+          <div class="io-input-row">
+            <input
+              id="inputPath"
+              type="text"
+              placeholder="Pilih file (.wmf, .emf, .wmz, .emz, .pdf) atau folder, atau tarik langsung ke sini"
+              spellcheck="false"
+              readonly
+            />
+            <button id="browseFilesBtn" class="btn btn-pick" type="button">
+              Pilih File...
+            </button>
+            <button id="browseFolderBtn" class="btn btn-pick" type="button">
+              Pilih Folder...
+            </button>
+          </div>
+
+          <label class="io-label" for="outputDir">Simpan PNG ke</label>
+          <div class="io-input-row">
+            <input
+              id="outputDir"
+              type="text"
+              placeholder="Kosongkan untuk simpan di folder asal (PDF masuk subfolder _PNG)"
+              spellcheck="false"
+            />
+            <button id="browseOutputBtn" class="btn btn-secondary" type="button">
+              Ganti Folder Tujuan...
+            </button>
+          </div>
+        </div>
+
+        <div class="options-bar">
+          <div class="opt-group" id="wmfOptGroup">
+            <label class="opt-label" for="wmfScaleSelect">Skala WMF:</label>
+            <select id="wmfScaleSelect" class="opt-select">
+              <option value="1">1x (96 DPI)</option>
+              <option value="2">2x (192 DPI)</option>
+              <option value="3" selected>3x (288 DPI)</option>
+              <option value="4">4x (384 DPI)</option>
+              <option value="8">8x (768 DPI)</option>
+            </select>
+
+            <label class="opt-label" for="wmfBgSelect">Latar:</label>
+            <select id="wmfBgSelect" class="opt-select">
+              <option value="Transparent" selected>Transparan</option>
+              <option value="White">Putih</option>
+              <option value="Black">Hitam</option>
+            </select>
+
+            <label class="checkbox-label">
+              <input id="keyOutWhiteCheck" type="checkbox" />
+              <span>Hapus putih solid</span>
+            </label>
+          </div>
+
+          <span class="opt-divider" aria-hidden="true"></span>
+
+          <div class="opt-group" id="pdfOptGroup">
+            <label class="opt-label" for="pdfDpiSelect">DPI PDF:</label>
+            <select id="pdfDpiSelect" class="opt-select">
+              <option value="150">150 DPI</option>
+              <option value="200">200 DPI</option>
+              <option value="300" selected>300 DPI</option>
+              <option value="600">600 DPI</option>
+            </select>
+
+            <label class="opt-label" for="pdfPagesInput">Halaman:</label>
+            <input
+              id="pdfPagesInput"
+              class="opt-input-sm mono"
+              type="text"
+              value="All"
+              placeholder="All atau 1-5, 8"
+              spellcheck="false"
+            />
+
+            <label class="checkbox-label">
+              <input id="zipCheck" type="checkbox" />
+              <span>Buat ZIP</span>
+            </label>
+          </div>
+
+          <label class="checkbox-label opt-right">
+            <input id="recursiveCheck" type="checkbox" checked />
+            <span>Ikutkan Subfolder</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Baris 2: Tombol Utama & Ringkasan -->
+      <section class="action-bar" aria-label="Aksi Konversi">
+        <div class="action-buttons">
+          <button id="startBtn" class="btn btn-primary btn-lg" type="button" disabled>
+            1. Mulai Konversi ke PNG
+          </button>
+          <button id="cancelBtn" class="btn btn-secondary btn-lg" type="button" disabled>
+            Stop / Batal
+          </button>
+          <button id="openOutputBtn" class="btn btn-open btn-lg" type="button" disabled>
+            2. Buka Folder Hasil
+          </button>
+        </div>
+
+        <div class="summary-counters mono" aria-live="polite">
+          <span>Total: <strong id="statTotal">0</strong></span>
+          <span class="sep">|</span>
+          <span class="c-ok">Berhasil: <strong id="statOk">0</strong></span>
+          <span class="sep">|</span>
+          <span class="c-warn">Lewat: <strong id="statSkip">0</strong></span>
+          <span class="sep">|</span>
+          <span class="c-err">Gagal: <strong id="statError">0</strong></span>
+        </div>
+      </section>
+
+      <!-- Baris 3: Daftar File Antrean -->
+      <section class="panel table-panel" aria-label="Daftar Antrean File">
+        <div class="table-toolbar">
+          <span class="table-heading">Daftar File (Klik 2x atau tekan Enter pada baris Berhasil untuk membuka hasil)</span>
+          <div class="filter-tabs" role="tablist" aria-label="Filter status">
+            <button class="filter-tab active" data-filter="all" type="button" role="tab" aria-selected="true">Semua</button>
+            <button class="filter-tab" data-filter="ok" type="button" role="tab" aria-selected="false">Berhasil</button>
+            <button class="filter-tab" data-filter="warn" type="button" role="tab" aria-selected="false">Lewat</button>
+            <button class="filter-tab" data-filter="error" type="button" role="tab" aria-selected="false">Gagal</button>
+          </div>
+        </div>
+
+        <div class="table-scroll">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th class="col-name">Nama File</th>
+                <th class="col-type">Tipe</th>
+                <th class="col-status">Status</th>
+                <th class="col-dur">Waktu</th>
+                <th class="col-detail">Keterangan Hasil</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody">
+              <tr class="empty-row">
+                <td colspan="5">
+                  Belum ada file dipilih. Klik <strong>Pilih File...</strong>, <strong>Pilih Folder...</strong>, atau tarik file WMF/EMF/PDF ke kotak atas.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Baris 4: Status Bar & Progres -->
+      <footer class="status-bar">
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
+          <div id="progressBar" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="status-meta">
+          <span id="phaseText" class="status-text">Siap digunakan</span>
+          <span id="progressMeta" class="status-numbers mono">0 / 0 (0%) | Sisa waktu: -</span>
+        </div>
+      </footer>
+    </main>
+
+    <script src="./emf_engine.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
